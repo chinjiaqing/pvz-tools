@@ -1,6 +1,6 @@
 {
   "name": "pvz-tools",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "植物大战僵尸修改器 By Nodejs.",
   "main": "./out/main/index.js",
   "author": "https://github.com/chinjiaqing",
