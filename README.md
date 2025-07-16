@@ -1,14 +1,16 @@
 # 🧠 从前端到内存操作：用 Node.js 写《植物大战僵尸》修改器
 
 > 谁说前端只能玩页面交互？
+
 > 本文将带你用 `Node.js` + [`memoryjs`](https://www.npmjs.com/package/memoryjs) 操作经典游戏《植物大战僵尸》的内存，修改阳光值、让植物种植无冷却。
+
 > 不需要 C++，不需要驱动，只要你会 JS，就能一行一行“控制游戏”，轻松写出专属游戏辅助脚本。
 
 ---
 
 ## 🌱 为什么选择 Node.js + memoryjs？
 
-作者作为一名切图仔，不会C++,不会Lua,只会一点易语言。但使用易语言编写脚本时，总感觉蹩脚得很。
+作者作为一名切图仔，不会C++，不会Lua，只会一点易语言。但使用易语言编写脚本时，总感觉蹩脚得很。那么Nodejs能不能写脚本呢？
 经过我多方打听，终于找到 `memoryjs` 这个库，提供了对 Windows 下进程、模块、内存读写的封装：
 
 ```bash
@@ -184,9 +186,9 @@ function Game_GetSunshine() {
 
 ## 🧩 后续拓展方向，欢迎关注
 
-1. 使用Nodejs调用大漠插件
-2. 使用Nodejs调用易键鼠的双头盒子虚拟输入dll
-3. 大型网游实战
+1. 使用Nodejs调用大漠插件：📊图文识别
+2. 使用Nodejs调用易键鼠的双头盒子dll: ⌨️虚拟输入
+3. 大型网游实战🚀
 
 ## 🏁 总结
 
@@ -209,6 +211,9 @@ function Game_GetSunshine() {
 ### 如何运行demo
 
 1. 克隆仓库
+   ```bash
+   git clone https://github.com/chinjiaqing/pvz-tools.git
+   ```
 2. 安装依赖，推荐使用`yarn`
    ```bash
     yarn install
