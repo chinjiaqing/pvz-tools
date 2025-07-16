@@ -1,0 +1,26 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 例如 v1.0.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build Electron app
+        run: yarn build:win
+
+      - name: Publish to GitHub Releases
+        run: npm run publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

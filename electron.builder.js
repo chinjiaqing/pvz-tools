@@ -43,6 +43,11 @@ export default {
         ],
         icon: 'resources/icon.png',
         artifactName: '${productName}-Windows-${version}-Setup.${ext}',
+        "publish": [
+            {
+                "provider": "github"
+            }
+        ]
     },
     nsis: {
         oneClick: false,
