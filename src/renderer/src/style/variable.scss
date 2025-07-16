@@ -1,0 +1,18 @@
+// css 颜色变量合集,最终都会转换为css变量，转换规则为加前缀 --,其余不变
+// 注意这个合集只包含颜色，其他变量请另定义
+$cssColorVarsMap:(
+
+	primary:#10b981,
+
+);
+
+// 转换成css变量，方便通过js调试颜色
+:root {
+	@each $key, $value in $cssColorVarsMap {
+		--#{''+$key}: #{$value};
+		// 生成带透明度的颜色
+		@for $i from 1 through 19 {
+		--#{''+$key}-#{$i * 5}: #{rgba($value, $i * 0.05)};
+		}
+	}
+}

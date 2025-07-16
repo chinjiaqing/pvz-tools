@@ -1,0 +1,12 @@
+@use "./variable.scss" as *;
+
+// 传递主要颜色给unocss, 转换规则为去掉前缀--,
+// 为了避免跟unocss规则冲突，同时将 - 替换为_ , 使用如 text-light_10
+:export {
+	@each $key, $value in $cssColorVarsMap {
+		--#{''+$key}: #{$value};
+		@for $i from 1 through 19 {
+		--#{''+$key}-#{$i * 5}: #{rgba($value, $i * 0.05)};
+		}
+	}
+}
