@@ -25,8 +25,9 @@ export function getGameProcessHandler() {
 }
 
 function getModuleBaseAddr(handler: Process, moduleName: string = GameExeName) {
+    const nameStr = moduleName.toLocaleLowerCase()
     const modules = memoryJs.getModules(handler.th32ProcessID) as Module[]
-    const mod = modules.find((m) => m.szModule.toLowerCase() === moduleName)
+    const mod = modules.find((m) => m.szModule.toLowerCase() === nameStr)
     return mod?.modBaseAddr
 }
 
