@@ -13,6 +13,7 @@ declare module 'vue' {
     InputNumber: typeof import('primevue/inputnumber')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    Slider: typeof import('primevue/slider')['default']
     Toast: typeof import('primevue/toast')['default']
     ToggleSwitch: typeof import('primevue/toggleswitch')['default']
   }
