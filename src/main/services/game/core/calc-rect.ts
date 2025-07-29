@@ -1,74 +1,158 @@
 import { MyPlayerInfo, PlayerInfo, PlayerRect } from "./types";
 
-/**
- * 计算敌人在屏幕上的框位置
- * @param player 敌人位置
- * @param self 本地玩家位置
- * @param fov_x 水平视角 [-180, 180]
- * @param fov_y 垂直视角 [-89, 89]
- * @param screenW 屏幕宽度（如1920）
- * @param screenH 屏幕高度（如1080）
- * @returns 若敌人在视野内，返回框位置；否则 null
- */
 export function calcPlayerRectSize(
-  player: MyPlayerInfo,
-  self: PlayerInfo,
-  fov_x: number,
-  fov_y: number,
-  screenW: number,
-  screenH: number
-): PlayerRect {
+    myPlayer: MyPlayerInfo,
+    otherPlayer: PlayerInfo,
+    screenWidth: number,
+    screenHeight: number
+): PlayerRect | null {
+    // 如果玩家死亡或无效，直接返回
+    if (otherPlayer.health <= 0) {
+        return null;
+    }
 
-  const defaultRect:PlayerRect = {
-    x:0,
-    y:0,
-    width:0,
-    height:0
-  }
-  // 方向角差值
-  let deltaX = player.x - self.x;
-  let deltaY = player.y - self.y;
-  let deltaZ = player.z - self.z;
+    // 计算坐标差值
+    const sub_x = otherPlayer.x - myPlayer.x;
+    const sub_y = otherPlayer.y - myPlayer.y;
+    const sub_z = otherPlayer.z - myPlayer.z;
 
-  const disOnSpace = Math.sqrt(deltaX ** 2 + deltaY ** 2 + deltaZ ** 2);
-  const disFlat = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-  if (disOnSpace < 0.0001) return defaultRect;
+    // 计算水平距离和空间距离
+    const dis_on_top = Math.sqrt(sub_x * sub_x + sub_y * sub_y);
+    const dis_on_space = Math.sqrt(dis_on_top * dis_on_top + sub_z * sub_z);
 
-  // 计算目标方位角
-  let yaw = Math.atan2(deltaY, deltaX); // 水平方向
-  let pitch = Math.atan2(deltaZ, disFlat); // 垂直方向
+    // 初始化结果对象
+    const result: PlayerRect = {
+        x: 0,
+        y: 0,
+        size: dis_on_space, // 尺寸基于空间距离
+        visible: false
+    };
 
-  // 转为角度
-  yaw = yaw * 180 / Math.PI;
-  pitch = pitch * 180 / Math.PI;
+    // 第一象限：敌人在右上方
+    if (sub_y > 0 && sub_x > 0) {
+        // 计算横向角度
+        const angle_DW_x = Math.atan(sub_y / sub_x) * 180 / Math.PI;
+        let angle_DZ_x = myPlayer.fov_x - angle_DW_x;
 
-  // 计算相对角度（与视角偏移）
-  let dx = yaw - fov_x;
-  let dy = pitch - fov_y;
+        // 判断是否在横向可视范围内
+        if (angle_DZ_x > -55 && angle_DZ_x < 50) {
+            // 计算纵向角度
+            const angle_DW_space = Math.asin(Math.abs(sub_z) / dis_on_space) * 180 / Math.PI;
+            let angle_DZ_y = myPlayer.fov_y;
+            
+            // 根据敌人在我上方/下方调整角度
+            if (otherPlayer.z > myPlayer.z) {
+                angle_DZ_y += angle_DW_space;
+            } else {
+                angle_DZ_y -= angle_DW_space;
+            }
+            
+            // 计算纵向距离
+            const dis_DZ_y = Math.sin(angle_DZ_y * Math.PI / 180) * dis_on_space;
+            const dis_WZ_y = Math.sqrt(dis_on_space * dis_on_space - dis_DZ_y * dis_DZ_y) * 0.80;
+            
+            // 计算屏幕坐标
+            result.x = dis_on_top * Math.sin(angle_DZ_x * Math.PI / 180) * 
+                       (screenWidth / 2) / dis_on_top + (screenWidth / 2);
+            result.y = (screenHeight / 2) - dis_DZ_y / dis_WZ_y * (screenHeight / 2);
+            result.visible = true;
+        }
+    }
+    // 第二象限：敌人在左上方
+    else if (sub_y > 0 && sub_x < 0) {
+        // 计算横向角度
+        const angle_DW_x = Math.atan(sub_y / sub_x) * 180 / Math.PI;
+        let angle_DZ_x = myPlayer.fov_x - angle_DW_x - 180;
+        
+        // 判断是否在横向可视范围内
+        if ((angle_DZ_x > -54 && angle_DZ_x < 50) || 
+            (angle_DZ_x > -360 && angle_DZ_x < -305)) {
+            
+            // 计算纵向角度
+            const angle_DW_space = Math.asin(Math.abs(sub_z) / dis_on_space) * 180 / Math.PI;
+            let angle_DZ_y = myPlayer.fov_y;
+            
+            // 根据敌人在我上方/下方调整角度
+            if (otherPlayer.z > myPlayer.z) {
+                angle_DZ_y += angle_DW_space;
+            } else {
+                angle_DZ_y -= angle_DW_space;
+            }
+            
+            // 计算纵向距离
+            const dis_DZ_y = Math.sin(angle_DZ_y * Math.PI / 180) * dis_on_space;
+            const dis_WZ_y = Math.sqrt(dis_on_space * dis_on_space - dis_DZ_y * dis_DZ_y) * 0.80;
+            
+            // 计算屏幕坐标
+            result.x = dis_on_top * Math.sin(angle_DZ_x * Math.PI / 180) * 
+                       (screenWidth / 2) / dis_on_top + (screenWidth / 2);
+            result.y = (screenHeight / 2) - dis_DZ_y / dis_WZ_y * (screenHeight / 2);
+            result.visible = true;
+        }
+    }
+    // 第三象限：敌人在左下方
+    else if (sub_y < 0 && sub_x < 0) {
+        // 计算横向角度
+        const angle_DW_x = Math.atan(sub_y / sub_x) * 180 / Math.PI;
+        let angle_DZ_x = myPlayer.fov_x - angle_DW_x - 180;
+        
+        // 判断是否在横向可视范围内
+        if ((angle_DZ_x > -410 && angle_DZ_x < -310) || 
+            (angle_DZ_x > -50 && angle_DZ_x < 0)) {
+            
+            // 计算纵向角度
+            const angle_DW_space = Math.asin(Math.abs(sub_z) / dis_on_space) * 180 / Math.PI;
+            let angle_DZ_y = myPlayer.fov_y;
+            
+            // 根据敌人在我上方/下方调整角度
+            if (otherPlayer.z > myPlayer.z) {
+                angle_DZ_y += angle_DW_space;
+            } else {
+                angle_DZ_y -= angle_DW_space;
+            }
+            
+            // 计算纵向距离
+            const dis_DZ_y = Math.sin(angle_DZ_y * Math.PI / 180) * dis_on_space;
+            const dis_WZ_y = Math.sqrt(dis_on_space * dis_on_space - dis_DZ_y * dis_DZ_y) * 0.80;
+            
+            // 计算屏幕坐标
+            result.x = dis_on_top * Math.sin(angle_DZ_x * Math.PI / 180) * 
+                       (screenWidth / 2) / dis_on_top + (screenWidth / 2);
+            result.y = (screenHeight / 2) - dis_DZ_y / dis_WZ_y * (screenHeight / 2);
+            result.visible = true;
+        }
+    }
+    // 第四象限：敌人在右下方
+    else if (sub_y < 0 && sub_x > 0) {
+        // 计算横向角度
+        const angle_DW_x = Math.atan(sub_y / sub_x) * 180 / Math.PI;
+        let angle_DZ_x = myPlayer.fov_x - angle_DW_x;
+        
+        // 判断是否在横向可视范围内
+        if (angle_DZ_x > -55 && angle_DZ_x < 50) {
+            // 计算纵向角度
+            const angle_DW_space = Math.asin(Math.abs(sub_z) / dis_on_space) * 180 / Math.PI;
+            let angle_DZ_y = myPlayer.fov_y;
+            
+            // 根据敌人在我上方/下方调整角度
+            if (otherPlayer.z > myPlayer.z) {
+                angle_DZ_y += angle_DW_space;
+            } else {
+                angle_DZ_y -= angle_DW_space;
+            }
+            
+            // 计算纵向距离
+            const dis_DZ_y = Math.sin(angle_DZ_y * Math.PI / 180) * dis_on_space;
+            const dis_WZ_y = Math.sqrt(dis_on_space * dis_on_space - dis_DZ_y * dis_DZ_y) * 0.80;
+            
+            // 计算屏幕坐标
+            result.x = dis_on_top * Math.sin(angle_DZ_x * Math.PI / 180) * 
+                       (screenWidth / 2) / dis_on_top + (screenWidth / 2);
+            result.y = (screenHeight / 2) - dis_DZ_y / dis_WZ_y * (screenHeight / 2);
+            result.visible = true;
+          }
+        }
+        result.y = result.y + 0.05 * result.y
 
-  // 范围修正 [-180,180]
-  if (dx > 180) dx -= 360;
-  if (dx < -180) dx += 360;
-
-  // 判断是否在视野范围
-  const fov_x_half = 90;
-  const fov_y_half = 89;
-  if (Math.abs(dx) > fov_x_half || Math.abs(dy) > fov_y_half) {
-    return defaultRect; // 不在视野范围
-  }
-
-  // 映射到屏幕坐标
-  const screenX = (screenW / 2) - (dx * (screenW / (fov_x_half * 2)));
-  const screenY = (screenH / 2) + (dy * (screenH / (fov_y_half * 2)));
-
-  // 计算宽高（与距离反比）
-  const width = Math.max(2, Math.floor(20899 / disOnSpace));
-  const height = Math.max(2, Math.floor(49999 / disOnSpace));
-
-  return {
-    x: Math.floor(screenX - width / 2),
-    y: Math.floor(screenY - height / 2),
-    width,
-    height,
-  };
+    return result.visible ? result : null;
 }

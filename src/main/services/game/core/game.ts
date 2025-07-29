@@ -1,7 +1,6 @@
 import memoryJsModule from 'memoryprocess';
 import type * as memoryJsType from 'memoryprocess';
 import type { Process, Module } from 'memoryprocess';
-import { calcPlayerRectSize } from './calc-rect';
 import { PlayerInfo } from './types';
 
 const memoryJs = (memoryJsModule as unknown as typeof memoryJsType).default;
@@ -33,7 +32,7 @@ function getModuleBaseAddr(handler: Process, moduleName: string = GameExeName): 
 export function Game_GetPlayerCount(handler: Process): number {
     const modBaseAddr = getModuleBaseAddr(handler, 'server.dll');
     if (!modBaseAddr) return 0;
-    const data = memoryJs.readMemory(handler.handle, modBaseAddr + 0x13e6db4, 'dword');
+    const data = memoryJs.readMemory(handler.handle, modBaseAddr + 0x166F99C, 'dword');
     return data || 0;
 }
 
@@ -41,14 +40,12 @@ export function Game_GetPlayersInfo(handler: Process, count: number): PlayerInfo
     const players: PlayerInfo[] = [];
     const modBaseAddr = getModuleBaseAddr(handler, 'client.dll');
     if (!modBaseAddr) return [];
-    
     console.log(`获取玩家数量： ${count}`);
     
-    let basePtr = modBaseAddr + 0x1866298;
-    let baseAddr = memoryJs.readMemory(handler.handle, basePtr, 'int64')!;
-
+    let basePtr = modBaseAddr + 0x1B01DC8;
     for (let i = 0; i < count; i++) {
-        let playerBasePtr = baseAddr + BigInt(0x8 + i * 0x10);
+        // let playerBasePtr = baseAddr + BigInt(0x8 + i * 0x10);
+        let playerBasePtr = basePtr + 0x8 + i * 0x10
         let playerBaseAddr = memoryJs.readMemory(
             handler.handle,
             playerBasePtr as unknown as number,
@@ -63,28 +60,33 @@ export function Game_GetPlayersInfo(handler: Process, count: number): PlayerInfo
 
         const health = memoryJs.readMemory(
             handler.handle,
-            (playerBaseAddr! + BigInt(0xab4)) as unknown as number,
+            (playerBaseAddr! + BigInt(0xb5c)) as unknown as number,
             'dword'
         )!;
         
         const x = memoryJs.readMemory(
             handler.handle,
-            (playerBaseAddr! + BigInt(0xdb8)) as unknown as number,
+            (playerBaseAddr! + BigInt(0xF58)) as unknown as number,
             'float'
         )!;
         
         const y = memoryJs.readMemory(
             handler.handle,
-            (playerBaseAddr! + BigInt(0xdbc)) as unknown as number,
+            (playerBaseAddr! + BigInt(0xF5C)) as unknown as number,
             'float'
         )!;
         
         const z = memoryJs.readMemory(
             handler.handle,
-            (playerBaseAddr! + BigInt(0xdc0)) as unknown as number,
+            (playerBaseAddr! + BigInt(0xF60)) as unknown as number,
             'float'
         )!;
-        
+         const team = memoryJs.readMemory(
+            handler.handle,
+            (playerBaseAddr! + BigInt(0x0e68)) as unknown as number,
+            'dword'
+        )!
+
         const player: PlayerInfo = {
             id: i,
             health: health,
@@ -95,7 +97,8 @@ export function Game_GetPlayersInfo(handler: Process, count: number): PlayerInfo
 
         // 只有玩家自己才有视角信息
         if (i === 0) {
-            const angPtr = modBaseAddr + 0x1A7D420;
+            // const angPtr = modBaseAddr + 0x1A7D420;
+            const angPtr = modBaseAddr + 0x1D0EB18
             const angY = memoryJs.readMemory(handler.handle, angPtr, 'float');
             const angX = memoryJs.readMemory(handler.handle, angPtr + 0x4, 'float');
             player.fov_y = angY;

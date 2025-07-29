@@ -1,9 +1,8 @@
 export interface PlayerRect {
     x: number
     y: number
-    width: number
-    height: number
-    valid?: boolean
+    size: number
+    visible?: boolean
 }
 
 export interface PlayerInfo {
@@ -15,6 +14,7 @@ export interface PlayerInfo {
     rect?: PlayerRect
     fov_y?: number
     fov_x?: number
+    team?:number
 }
 
 export interface MyPlayerInfo extends PlayerInfo {

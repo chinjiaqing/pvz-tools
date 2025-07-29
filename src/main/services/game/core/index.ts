@@ -1,5 +1,5 @@
 import { getGameProcessHandler, Game_GetPlayerCount, Game_GetPlayersInfo } from './game'
-import { Drawer } from './draw'
+import { Drawer } from './draw-new'
 import memoryJsModule from 'memoryprocess'
 import type * as memoryJsType from 'memoryprocess'
 import { calcPlayerRectSize } from './calc-rect'
@@ -62,6 +62,11 @@ async function mainLoop() {
         frameCount++
 
         try {
+            if (!drawer.processMessages()) {
+                console.log('收到退出消息')
+                shutdown()
+                return
+            }
             // 开始绘制（捕获背景）
             drawer.beginDraw()
 
@@ -87,24 +92,18 @@ async function mainLoop() {
                 const rect = calcPlayerRectSize(
                     basePlayer,
                     target,
-                    basePlayer.fov_x,
-                    basePlayer.fov_y,
                     drawer.screenWidth,
                     drawer.screenHeight
                 )
-                // 如果目标可见，绘制方框和血量
-                // 计算距离（用于方框大小）
-                // const dx = target.x - player.x
-                // const dy = target.y - player.y
-                // const dz = target.z - player.z
-                // const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
-
+                if (!rect) continue
+                console.log(`rect`, rect, drawer.screenWidth, drawer.screenHeight)
                 // 绘制方框（带距离感知）
-                drawer.drawPlayerRect(rect, target.health)
-
+                let width = Math.max(1, 20899 / rect.size)
+                let height = Math.max(1, 49999 / rect.size)
+                console.log(`玩家:`,rect,width,height)
+                drawer.drawPlayerRect(rect.x, rect.y, width, height, target.health)
                 // 绘制血量（在方框上方）
-                drawer.drawHealthText(target.health, rect.x, rect.y)
-
+                // drawer.drawHealthText(target.health, rect.x, rect.y)
                 visibleTargets++
             }
 
